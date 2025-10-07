@@ -2,11 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-
-defaults:
-  run:
-    working-directory: account-authorization-manager
+    branches: [master]
 
 permissions:
   contents: read
@@ -16,6 +12,10 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: account-authorization-manager
 
 jobs:
   build:
@@ -39,15 +39,15 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: ./account-authorization-manager/dist
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        id: deploy
+        id: deployment
         uses: actions/deploy-pages@v4
