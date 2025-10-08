@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import CalendarView from '../components/CalendarView'
 import AccountTable from '../components/AccountTable'
 import ReminderPanel from '../components/ReminderPanel'
+import { useI18n } from '../i18n/I18nProvider.jsx'
 
 const Dashboard = ({
   accounts = [],
@@ -12,8 +13,12 @@ const Dashboard = ({
   adminReminders = [],
   replacementSuggestions = [],
   getAccountsExpiringOn = () => [],
+  onCreateAccount,
+  onEditAccount,
+  onDeleteAccount,
 }) => {
   const [selectedDate, setSelectedDate] = useState(null)
+  const { t } = useI18n()
 
   const tableAccounts = useMemo(() => {
     if (!selectedDate) {
@@ -24,8 +29,8 @@ const Dashboard = ({
   }, [accounts, selectedDate, getAccountsExpiringOn])
 
   const tableSubtitle = selectedDate
-    ? `${selectedDate} 到期的账号`
-    : '全部账号授权概览'
+    ? t('dashboard.tableSubtitleDate', [selectedDate])
+    : t('dashboard.tableSubtitleAll')
 
   return (
     <div className="space-y-6">
@@ -47,7 +52,7 @@ const Dashboard = ({
         accounts={tableAccounts}
         admins={admins}
         accountStatuses={accountStatuses}
-        title="账号授权状态"
+        title={t('dashboard.tableTitle')}
         subtitle={tableSubtitle}
         actions={
           selectedDate ? (
@@ -56,10 +61,20 @@ const Dashboard = ({
               onClick={() => setSelectedDate(null)}
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
             >
-              清除筛选
+              {t('dashboard.clearFilter')}
+            </button>
+          ) : onCreateAccount ? (
+            <button
+              type="button"
+              onClick={onCreateAccount}
+              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              {t('common.addAccount')}
             </button>
           ) : null
         }
+        onEditAccount={onEditAccount}
+        onDeleteAccount={onDeleteAccount}
       />
     </div>
   )

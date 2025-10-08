@@ -1,27 +1,30 @@
+import { useI18n } from '../i18n/I18nProvider.jsx'
+
 const ReminderPanel = ({
   accountReminders = [],
   adminReminders = [],
   replacementSuggestions = [],
 }) => {
+  const { t } = useI18n()
   const sections = [
     {
       key: 'account',
-      title: '账号提醒',
-      description: '关注即将到期或已经过期的账号授权。',
+      title: t('reminders.accountReminders'),
+      description: t('reminders.accountRemindersDescription'),
       accent: 'bg-status-expiring/10 text-status-expiring',
       items: accountReminders,
     },
     {
       key: 'admin',
-      title: '管理员提醒',
-      description: '监控管理员授权窗口并及时跟进。',
+      title: t('reminders.adminReminders'),
+      description: t('reminders.adminRemindersDescription'),
       accent: 'bg-status-reminder/10 text-status-reminder',
       items: adminReminders,
     },
     {
       key: 'replacement',
-      title: '替换建议',
-      description: '提前规划管理员替换方案，确保连续授权。',
+      title: t('reminders.replacement'),
+      description: t('reminders.replacementDescription'),
       accent: 'bg-status-reminder/10 text-status-reminder',
       items: replacementSuggestions,
     },
@@ -42,7 +45,7 @@ const ReminderPanel = ({
             <span
               className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${section.accent}`}
             >
-              共 {section.items.length} 条
+              {t('reminders.items', [section.items.length])}
             </span>
           </div>
           <div className="mt-4 space-y-3">
@@ -55,19 +58,19 @@ const ReminderPanel = ({
                   <p className="text-sm font-medium text-slate-700">{item.message}</p>
                   {item.account ? (
                     <p className="text-xs text-slate-500">
-                      授权管理员：{item.account.authorizedByName}
+                      {t('reminders.authorizedBy', [item.account.authorizedByName])}
                     </p>
                   ) : null}
                   {item.admin ? (
                     <p className="text-xs text-slate-500">
-                      授权截止：{item.admin.expirationDate}
+                      {t('reminders.adminWindowEnds', [item.admin.expirationDate])}
                     </p>
                   ) : null}
                 </div>
               ))
             ) : (
               <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400">
-                当前没有需要关注的提醒。
+                {t('reminders.none')}
               </div>
             )}
           </div>

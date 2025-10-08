@@ -1,18 +1,18 @@
 import { useMemo } from 'react'
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { useI18n } from '../i18n/I18nProvider.jsx'
 
 const AccountTable = ({
   accounts = [],
   admins = [],
   accountStatuses = {},
-  title = '账号列表',
+  title,
   subtitle,
   actions,
+  onEditAccount,
+  onDeleteAccount,
 }) => {
+  const { t } = useI18n()
   const adminLookup = useMemo(
     () =>
       admins.reduce((acc, admin) => {
@@ -26,38 +26,40 @@ const AccountTable = ({
     () =>
       accounts.map((account) => ({
         ...account,
-        authorizedByName: adminLookup[account.authorizedBy] ?? 'Unknown',
+        authorizedByName: account.authorizedBy
+          ? adminLookup[account.authorizedBy] ?? t('common.notLinked')
+          : t('common.notLinked'),
         status: accountStatuses[account.id],
       })),
     [accounts, adminLookup, accountStatuses],
   )
 
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    const baseColumns = [
       {
-        header: '账号名称',
+        header: t('tables.accountName'),
         accessorKey: 'name',
         cell: (info) => (
           <div className="font-medium text-slate-800">{info.getValue()}</div>
         ),
       },
       {
-        header: '授权管理员',
+        header: t('tables.authorizedBy'),
         accessorKey: 'authorizedByName',
         cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
       },
       {
-        header: '到期日期',
+        header: t('tables.expirationDate'),
         accessorKey: 'expirationDate',
         cell: (info) => <span className="text-slate-600">{info.getValue()}</span>,
       },
       {
-        header: '状态',
+        header: t('tables.status'),
         accessorKey: 'status',
         cell: (info) => {
           const status = info.getValue()
           if (!status) {
-            return <span className="text-slate-500">未知</span>
+            return <span className="text-slate-500">{t('statusLabels.normal')}</span>
           }
           return (
             <span
@@ -69,9 +71,42 @@ const AccountTable = ({
           )
         },
       },
-    ],
-    [],
-  )
+    ]
+
+    if (onEditAccount || onDeleteAccount) {
+      baseColumns.push({
+        id: 'actions',
+        header: t('tables.actions'),
+        cell: (info) => {
+          const account = info.row.original
+          return (
+            <div className="flex flex-wrap gap-2">
+              {onEditAccount ? (
+                <button
+                  type="button"
+                  onClick={() => onEditAccount(account)}
+                  className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                >
+                  {t('common.edit')}
+                </button>
+              ) : null}
+              {onDeleteAccount ? (
+                <button
+                  type="button"
+                  onClick={() => onDeleteAccount(account)}
+                  className="rounded-full border border-status-expired/40 bg-status-expired/10 px-3 py-1 text-xs text-status-expired hover:bg-status-expired/20"
+                >
+                  {t('common.delete')}
+                </button>
+              ) : null}
+            </div>
+          )
+        },
+      })
+    }
+
+    return baseColumns
+  }, [onEditAccount, onDeleteAccount, t])
 
   const table = useReactTable({
     data,
@@ -79,12 +114,17 @@ const AccountTable = ({
     getCoreRowModel: getCoreRowModel(),
   })
 
+  const resolvedTitle = title ?? t('accountList.tableTitle')
+  const resolvedSubtitle = subtitle !== undefined ? subtitle : t('accountList.tableSubtitle')
+
   return (
     <div className="rounded-2xl bg-white p-4 shadow-card border border-slate-200">
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          {subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}
+          <h2 className="text-lg font-semibold text-slate-800">{resolvedTitle}</h2>
+          {resolvedSubtitle ? (
+            <p className="text-sm text-slate-500">{resolvedSubtitle}</p>
+          ) : null}
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
       </div>
@@ -124,7 +164,7 @@ const AccountTable = ({
                   colSpan={columns.length}
                   className="px-6 py-10 text-center text-sm text-slate-500"
                 >
-                  当前筛选暂无账号数据。
+                  {t('tables.emptyAccounts')}
                 </td>
               </tr>
             )}

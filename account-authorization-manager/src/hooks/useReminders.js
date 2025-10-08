@@ -1,53 +1,9 @@
 import { useMemo } from 'react'
+import { useI18n } from '../i18n/I18nProvider.jsx'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-const statusMap = {
-  normal: {
-    key: 'normal',
-    label: '正常',
-    badgeClass: 'bg-status-normal/10 text-status-normal',
-    dotClass: 'bg-status-normal',
-  },
-  expiring: {
-    key: 'expiring',
-    label: '即将过期',
-    badgeClass: 'bg-status-expiring/10 text-status-expiring',
-    dotClass: 'bg-status-expiring',
-  },
-  expired: {
-    key: 'expired',
-    label: '已过期',
-    badgeClass: 'bg-status-expired/10 text-status-expired',
-    dotClass: 'bg-status-expired',
-  },
-  reminder: {
-    key: 'reminder',
-    label: '提醒',
-    badgeClass: 'bg-status-reminder/10 text-status-reminder',
-    dotClass: 'bg-status-reminder',
-  },
-}
-
 const parseDate = (value) => new Date(`${value}T00:00:00`)
-
-const getStatus = (expirationDate, today) => {
-  const normalizedToday = new Date(today)
-  normalizedToday.setHours(0, 0, 0, 0)
-  const target = parseDate(expirationDate)
-  const diffMs = target.getTime() - normalizedToday.getTime()
-  const diffDays = Math.ceil(diffMs / MS_PER_DAY)
-
-  if (diffDays < 0) {
-    return { ...statusMap.expired, daysRemaining: diffDays }
-  }
-
-  if (diffDays <= 3) {
-    return { ...statusMap.expiring, daysRemaining: diffDays }
-  }
-
-  return { ...statusMap.normal, daysRemaining: diffDays }
-}
 
 const calculateAuthorizedSpan = (startDate, expirationDate) => {
   const start = parseDate(startDate)
@@ -55,8 +11,55 @@ const calculateAuthorizedSpan = (startDate, expirationDate) => {
   return Math.round((end.getTime() - start.getTime()) / MS_PER_DAY)
 }
 
-export const useReminders = (accounts = [], admins = [], referenceDate = new Date()) =>
-  useMemo(() => {
+export const useReminders = (accounts = [], admins = [], referenceDate = new Date()) => {
+  const { t } = useI18n()
+
+  return useMemo(() => {
+    const statusMap = {
+      normal: {
+        key: 'normal',
+        label: t('statusLabels.normal'),
+        badgeClass: 'bg-status-normal/10 text-status-normal',
+        dotClass: 'bg-status-normal',
+      },
+      expiring: {
+        key: 'expiring',
+        label: t('statusLabels.expiring'),
+        badgeClass: 'bg-status-expiring/10 text-status-expiring',
+        dotClass: 'bg-status-expiring',
+      },
+      expired: {
+        key: 'expired',
+        label: t('statusLabels.expired'),
+        badgeClass: 'bg-status-expired/10 text-status-expired',
+        dotClass: 'bg-status-expired',
+      },
+      reminder: {
+        key: 'reminder',
+        label: t('statusLabels.reminder'),
+        badgeClass: 'bg-status-reminder/10 text-status-reminder',
+        dotClass: 'bg-status-reminder',
+      },
+    }
+
+    const getStatus = (expirationDate, today) => {
+      const normalizedToday = new Date(today)
+      normalizedToday.setHours(0, 0, 0, 0)
+      const target = parseDate(expirationDate)
+      const diffMs = target.getTime() - normalizedToday.getTime()
+      const diffDays = Math.ceil(diffMs / MS_PER_DAY)
+
+      if (diffDays < 0) {
+        return { ...statusMap.expired, daysRemaining: diffDays }
+      }
+
+      if (diffDays <= 3) {
+        return { ...statusMap.expiring, daysRemaining: diffDays }
+      }
+
+      return { ...statusMap.normal, daysRemaining: diffDays }
+    }
+
     const today = new Date(referenceDate)
     today.setHours(0, 0, 0, 0)
 
@@ -75,7 +78,7 @@ export const useReminders = (accounts = [], admins = [], referenceDate = new Dat
     accounts.forEach((account) => {
       const status = getStatus(account.expirationDate, today)
       accountStatuses[account.id] = status
-      const authorizedByName = adminLookup[account.authorizedBy] ?? '未知管理员'
+      const authorizedByName = adminLookup[account.authorizedBy] ?? t('reminders.unknownAdmin')
 
       if (status.key !== 'normal') {
         accountReminders.push({
@@ -84,8 +87,8 @@ export const useReminders = (accounts = [], admins = [], referenceDate = new Dat
           status,
           message:
             status.key === 'expired'
-              ? `${account.name} 的授权已过期。`
-              : `${account.name} 将在 ${status.daysRemaining} 天后到期。`,
+              ? t('reminders.accountExpired', [account.name])
+              : t('reminders.accountExpiring', [account.name, status.daysRemaining]),
           account: {
             ...account,
             authorizedByName,
@@ -114,8 +117,8 @@ export const useReminders = (accounts = [], admins = [], referenceDate = new Dat
           status: statusMap.reminder,
           message:
             status.key === 'expired'
-              ? `${admin.name} 的授权窗口已于 ${admin.expirationDate} 关闭。`
-              : `${admin.name} 将在 ${status.daysRemaining} 天后到期。`,
+              ? t('reminders.adminExpired', [admin.name, admin.expirationDate])
+              : t('reminders.adminExpiring', [admin.name, status.daysRemaining]),
           admin,
         })
       }
@@ -128,8 +131,8 @@ export const useReminders = (accounts = [], admins = [], referenceDate = new Dat
           status: statusMap.reminder,
           message:
             span > 12
-              ? `${admin.name} 的授权时长超过 12 天，请立即更换。`
-              : `请在 ${admin.expirationDate} 前为 ${admin.name} 安排替换人选。`,
+              ? t('reminders.replacementOverLimit', [admin.name])
+              : t('reminders.replacementUpcoming', [admin.name, admin.expirationDate]),
           admin,
         })
       }
@@ -147,4 +150,5 @@ export const useReminders = (accounts = [], admins = [], referenceDate = new Dat
       getAccountsExpiringOn,
       statusMap,
     }
-  }, [accounts, admins, referenceDate])
+  }, [accounts, admins, referenceDate, t])
+}
