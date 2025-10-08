@@ -5,6 +5,7 @@ import AdminList from './pages/AdminList'
 import ReminderCenter from './pages/ReminderCenter'
 import { mockAccounts } from './data/mockAccounts'
 import { mockAdmins } from './data/mockAdmins'
+import OverviewMetrics from './components/OverviewMetrics.jsx'
 
 const navigationItems = [
   { key: 'dashboard', label: '日历视图' },
@@ -43,7 +44,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-100">
       <div className="flex min-h-screen">
-        <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white p-6 shadow-card lg:flex">
+        <aside className="hidden w-64 flex-col border-r border-slate-200 bg-white p-6 shadow-card lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
               AAM
@@ -72,17 +73,7 @@ const App = () => {
               )
             })}
           </nav>
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold tracking-wide text-slate-400">概览</p>
-            <div className="mt-3 space-y-3">
-              {metrics.map((metric) => (
-                <div key={metric.label}>
-                  <p className="text-xs text-slate-500">{metric.label}</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-800">{metric.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <OverviewMetrics metrics={metrics} className="mt-6" />
         </aside>
         <div className="flex flex-1 flex-col">
           <header className="flex flex-col gap-4 border-b border-slate-200 bg-white p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
@@ -119,6 +110,9 @@ const App = () => {
                   新增管理员
                 </button>
               </div>
+            </div>
+            <div className="lg:hidden">
+              <OverviewMetrics metrics={metrics} />
             </div>
           </header>
           <main className="flex-1 overflow-y-auto">
