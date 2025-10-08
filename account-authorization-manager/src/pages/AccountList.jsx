@@ -1,11 +1,10 @@
 import AccountTable from '../components/AccountTable'
-import { mockAccounts } from '../data/mockAccounts'
-import { mockAdmins } from '../data/mockAdmins'
-import { useReminders } from '../hooks/useReminders'
 
-const AccountList = () => {
-  const { accountStatuses } = useReminders(mockAccounts, mockAdmins)
-
+const AccountList = ({
+  accounts = [],
+  admins = [],
+  accountStatuses = {},
+}) => {
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
@@ -14,8 +13,8 @@ const AccountList = () => {
       </header>
 
       <AccountTable
-        accounts={mockAccounts}
-        admins={mockAdmins}
+        accounts={accounts}
+        admins={admins}
         accountStatuses={accountStatuses}
         title="全部账号"
         subtitle="按名称排序展示"

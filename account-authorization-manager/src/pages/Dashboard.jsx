@@ -2,28 +2,26 @@ import { useMemo, useState } from 'react'
 import CalendarView from '../components/CalendarView'
 import AccountTable from '../components/AccountTable'
 import ReminderPanel from '../components/ReminderPanel'
-import { mockAccounts } from '../data/mockAccounts'
-import { mockAdmins } from '../data/mockAdmins'
-import { useReminders } from '../hooks/useReminders'
 
-const Dashboard = () => {
+const Dashboard = ({
+  accounts = [],
+  admins = [],
+  accountStatuses = {},
+  adminStatuses = {},
+  accountReminders = [],
+  adminReminders = [],
+  replacementSuggestions = [],
+  getAccountsExpiringOn = () => [],
+}) => {
   const [selectedDate, setSelectedDate] = useState(null)
-  const {
-    accountStatuses,
-    adminStatuses,
-    accountReminders,
-    adminReminders,
-    replacementSuggestions,
-    getAccountsExpiringOn,
-  } = useReminders(mockAccounts, mockAdmins)
 
   const tableAccounts = useMemo(() => {
     if (!selectedDate) {
-      return mockAccounts
+      return accounts
     }
     const expiring = getAccountsExpiringOn(selectedDate)
-    return expiring.length ? expiring : mockAccounts
-  }, [selectedDate, getAccountsExpiringOn])
+    return expiring.length ? expiring : accounts
+  }, [accounts, selectedDate, getAccountsExpiringOn])
 
   const tableSubtitle = selectedDate
     ? `${selectedDate} 到期的账号`
@@ -38,8 +36,8 @@ const Dashboard = () => {
       />
 
       <CalendarView
-        accounts={mockAccounts}
-        admins={mockAdmins}
+        accounts={accounts}
+        admins={admins}
         accountStatuses={accountStatuses}
         adminStatuses={adminStatuses}
         onDateSelect={setSelectedDate}
@@ -47,7 +45,7 @@ const Dashboard = () => {
 
       <AccountTable
         accounts={tableAccounts}
-        admins={mockAdmins}
+        admins={admins}
         accountStatuses={accountStatuses}
         title="账号授权状态"
         subtitle={tableSubtitle}

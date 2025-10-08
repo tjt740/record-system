@@ -3,9 +3,9 @@ import Dashboard from './pages/Dashboard'
 import AccountList from './pages/AccountList'
 import AdminList from './pages/AdminList'
 import ReminderCenter from './pages/ReminderCenter'
-import { mockAccounts } from './data/mockAccounts'
-import { mockAdmins } from './data/mockAdmins'
 import OverviewMetrics from './components/OverviewMetrics.jsx'
+import { useSupabaseData } from './hooks/useSupabaseData'
+import { useReminders } from './hooks/useReminders'
 
 const navigationItems = [
   { key: 'dashboard', label: '日历视图' },
@@ -16,29 +16,86 @@ const navigationItems = [
 
 const App = () => {
   const [activeView, setActiveView] = useState('dashboard')
+  const { accounts, admins, stats, isLoading, error, refresh, isSupabaseEnabled } =
+    useSupabaseData()
+  const reminders = useReminders(accounts, admins)
 
-  const metrics = useMemo(() => {
-    const totalAccounts = mockAccounts.length
-    const totalAdmins = mockAdmins.length
+  const metrics = useMemo(
+    () => [
+      { label: '账号总数', value: stats.totalAccounts },
+      { label: '管理员总数', value: stats.totalAdmins },
+    ],
+    [stats.totalAccounts, stats.totalAdmins],
+  )
 
-    return [
-      { label: '账号总数', value: totalAccounts },
-      { label: '管理员总数', value: totalAdmins },
-    ]
-  }, [])
+  const dataStatus = useMemo(() => {
+    if (!isSupabaseEnabled) {
+      return {
+        tone: 'warning',
+        message: '正在使用示例数据，可在 Supabase 配置后同步真实数据。',
+      }
+    }
+    if (error) {
+      return {
+        tone: 'error',
+        message: '无法连接 Supabase，已回退到示例数据。',
+      }
+    }
+    if (isLoading) {
+      return {
+        tone: 'info',
+        message: '正在同步 Supabase 数据...',
+      }
+    }
+    return {
+      tone: 'success',
+      message: 'Supabase 数据已同步。',
+    }
+  }, [isSupabaseEnabled, error, isLoading])
 
   const renderContent = () => {
+    const pageProps = {
+      accounts,
+      admins,
+      accountStatuses: reminders.accountStatuses,
+      adminStatuses: reminders.adminStatuses,
+    }
+
     switch (activeView) {
       case 'accounts':
-        return <AccountList />
+        return <AccountList {...pageProps} />
       case 'admins':
-        return <AdminList />
+        return <AdminList admins={admins} adminStatuses={reminders.adminStatuses} />
       case 'reminders':
-        return <ReminderCenter />
+        return (
+          <ReminderCenter
+            accountReminders={reminders.accountReminders}
+            adminReminders={reminders.adminReminders}
+            replacementSuggestions={reminders.replacementSuggestions}
+          />
+        )
       case 'dashboard':
       default:
-        return <Dashboard />
+        return (
+          <Dashboard
+            accounts={accounts}
+            admins={admins}
+            accountStatuses={reminders.accountStatuses}
+            adminStatuses={reminders.adminStatuses}
+            accountReminders={reminders.accountReminders}
+            adminReminders={reminders.adminReminders}
+            replacementSuggestions={reminders.replacementSuggestions}
+            getAccountsExpiringOn={reminders.getAccountsExpiringOn}
+          />
+        )
     }
+  }
+
+  const statusBadgeStyles = {
+    success: 'bg-status-normal/10 text-status-normal',
+    info: 'bg-status-reminder/10 text-status-reminder',
+    warning: 'bg-status-expiring/10 text-status-expiring',
+    error: 'bg-status-expired/10 text-status-expired',
   }
 
   return (
@@ -110,6 +167,20 @@ const App = () => {
                   新增管理员
                 </button>
               </div>
+            </div>
+            <div
+              className={`inline-flex items-center justify-between gap-2 rounded-full px-4 py-2 text-xs font-medium ${statusBadgeStyles[dataStatus.tone]}`}
+            >
+              <span>{dataStatus.message}</span>
+              {isSupabaseEnabled ? (
+                <button
+                  type="button"
+                  onClick={refresh}
+                  className="rounded-full border border-transparent bg-white/30 px-2 py-0.5 text-xs text-slate-600 transition hover:bg-white/60"
+                >
+                  刷新
+                </button>
+              ) : null}
             </div>
             <div className="lg:hidden">
               <OverviewMetrics metrics={metrics} />

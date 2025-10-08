@@ -1,14 +1,10 @@
 import ReminderPanel from '../components/ReminderPanel'
-import { mockAccounts } from '../data/mockAccounts'
-import { mockAdmins } from '../data/mockAdmins'
-import { useReminders } from '../hooks/useReminders'
 
-const ReminderCenter = () => {
-  const { accountReminders, adminReminders, replacementSuggestions } = useReminders(
-    mockAccounts,
-    mockAdmins,
-  )
-
+const ReminderCenter = ({
+  accountReminders = [],
+  adminReminders = [],
+  replacementSuggestions = [],
+}) => {
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
