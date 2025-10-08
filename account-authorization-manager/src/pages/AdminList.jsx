@@ -1,9 +1,4 @@
-import { mockAdmins } from '../data/mockAdmins'
-import { useReminders } from '../hooks/useReminders'
-import { mockAccounts } from '../data/mockAccounts'
-
-const AdminList = () => {
-  const { adminStatuses } = useReminders(mockAccounts, mockAdmins)
+const AdminList = ({ admins = [], adminStatuses = {} }) => {
 
   return (
     <div className="space-y-6">
@@ -13,7 +8,7 @@ const AdminList = () => {
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {mockAdmins.map((admin) => {
+        {admins.map((admin) => {
           const status = adminStatuses[admin.id]
           const badge = status
             ? status
