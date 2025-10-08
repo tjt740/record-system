@@ -3,6 +3,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import zhCnLocale from '@fullcalendar/core/locales/zh-cn'
+import { useI18n } from '../i18n/I18nProvider.jsx'
 
 const colorPalette = {
   normal: '#22c55e',
@@ -18,6 +19,7 @@ const CalendarView = ({
   adminStatuses = {},
   onDateSelect = () => {},
 }) => {
+  const { t, lang } = useI18n()
   const events = useMemo(() => {
     const accountEvents = accounts.map((account) => {
       const status = accountStatuses[account.id]
@@ -31,7 +33,7 @@ const CalendarView = ({
         borderColor: status ? colorPalette[status.key] : colorPalette.normal,
         extendedProps: {
           type: 'account',
-          status: status?.label ?? '正常',
+          status: status?.label ?? t('statusLabels.normal'),
           expiresOn: account.expirationDate,
         },
       }
@@ -41,7 +43,7 @@ const CalendarView = ({
       const status = adminStatuses[admin.id]
       return {
         id: admin.id,
-        title: `${admin.name}（管理员）`,
+        title: admin.name,
         start: admin.startDate,
         end: admin.expirationDate,
         display: 'background',
@@ -49,24 +51,26 @@ const CalendarView = ({
         borderColor: colorPalette.reminder,
         extendedProps: {
           type: 'admin',
-          status: status?.label ?? '提醒',
+          status: status?.label ?? t('statusLabels.reminder'),
           expiresOn: admin.expirationDate,
         },
       }
     })
 
     return [...adminEvents, ...accountEvents]
-  }, [accounts, admins, accountStatuses, adminStatuses])
+  }, [accounts, admins, accountStatuses, adminStatuses, t])
+
+  const calendarLocale = lang === 'zh' ? zhCnLocale : undefined
 
   return (
     <div className="rounded-2xl bg-white p-4 shadow-card border border-slate-200">
       <div className="flex items-center justify-between pb-4">
-        <h2 className="text-lg font-semibold text-slate-800">授权日历</h2>
+        <h2 className="text-lg font-semibold text-slate-800">{t('dashboard.calendarTitle')}</h2>
         <div className="flex gap-3 text-sm text-slate-500">
-          <LegendDot color={colorPalette.expired} label="已过期" />
-          <LegendDot color={colorPalette.expiring} label="即将过期" />
-          <LegendDot color={colorPalette.normal} label="正常" />
-          <LegendDot color={colorPalette.reminder} label="管理员提醒" />
+          <LegendDot color={colorPalette.expired} label={t('dashboard.legendExpired')} />
+          <LegendDot color={colorPalette.expiring} label={t('dashboard.legendExpiring')} />
+          <LegendDot color={colorPalette.normal} label={t('dashboard.legendNormal')} />
+          <LegendDot color={colorPalette.reminder} label={t('dashboard.legendReminder')} />
         </div>
       </div>
       <FullCalendar
@@ -76,7 +80,7 @@ const CalendarView = ({
         events={events}
         height="auto"
         displayEventTime={false}
-        locale={zhCnLocale}
+        locale={calendarLocale}
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
